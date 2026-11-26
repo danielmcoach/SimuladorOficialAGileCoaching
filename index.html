@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador Oficial ACPC® V072026 — CertiProf</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --navy: #0b1f3a;
+      --navy-light: #16325b;
+      --cyan: #00a8e8;
+      --cyan-dark: #0082b4;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #dbe3ee;
+      --success: #15803d;
+      --success-bg: #dcfce7;
+      --danger: #b91c1c;
+      --danger-bg: #fee2e2;
+      --warn: #b45309;
+      --warn-bg: #fef3c7;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    header.topbar {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: var(--cyan);
+      color: #fff;
+      font-weight: 800;
+      padding: 6px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      font-size: 0.9rem;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .brand small {
+      display: block;
+      color: #cbd5e1;
+      font-size: 0.78rem;
+    }
+
+    .timer-box {
+      display: none;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .timer-pill {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .timer-pill.warning {
+      background: #f59e0b;
+      color: #111827;
+      border-color: #fbbf24;
+    }
+
+    .timer-pill.danger {
+      background: #dc2626;
+      color: #fff;
+      border-color: #fca5a5;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 28px auto;
+      padding: 0 18px 60px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    }
+
+    .hidden { display: none !important; }
+
+    /* Welcome Screen */
+    .welcome-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin: 22px 0;
+    }
+
+    .stat-tile {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .stat-tile span {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-tile strong {
+      font-size: 1.15rem;
+      color: var(--navy);
+    }
+
+    .notice-box {
+      background: #eff6ff;
+      border-left: 4px solid var(--cyan);
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      margin-bottom: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--navy);
+    }
+
+    .form-group input {
+      width: 100%;
+      max-width: 440px;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.18);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-primary:hover { background: var(--navy-light); }
+    .btn-cyan { background: var(--cyan); color: #fff; }
+    .btn-cyan:hover { background: var(--cyan-dark); }
+    .btn-outline { background: #fff; color: var(--navy); border: 1px solid #cbd5e1; }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #fcd34d; }
+    .btn-warn.active { background: #f59e0b; color: #fff; border-color: #d97706; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #991b1b; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Exam Layout */
+    .exam-layout {
+      display: grid;
+      grid-template-columns: 1fr 290px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .exam-layout { grid-template-columns: 1fr; }
+    }
+
+    .progress-wrap {
+      margin-bottom: 18px;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.86rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--cyan);
+      width: 0%;
+      transition: width 0.25s ease;
+    }
+
+    .q-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .q-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+    }
+
+    .q-text {
+      font-size: 1.12rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin: 0 0 20px;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: #fff;
+    }
+
+    .option-item:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+    }
+
+    .option-item.selected {
+      border-color: var(--cyan);
+      background: #f0f9ff;
+    }
+
+    .option-item input[type="radio"] {
+      margin-top: 4px;
+      accent-color: var(--navy);
+      transform: scale(1.15);
+    }
+
+    .nav-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 26px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* Sidebar Navigator */
+    .sidebar h3 {
+      margin: 0 0 12px;
+      font-size: 0.98rem;
+      color: var(--navy);
+    }
+
+    .q-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .q-dot {
+      height: 36px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-weight: 600;
+      font-size: 0.84rem;
+      cursor: pointer;
+      color: var(--text);
+      position: relative;
+    }
+
+    .q-dot.current {
+      border: 2px solid var(--navy);
+      box-shadow: 0 0 0 2px rgba(11, 31, 58, 0.15);
+    }
+
+    .q-dot.answered {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    .q-dot.flagged::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #f59e0b;
+    }
+
+    .legend {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* Results Screen */
+    .result-banner {
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .result-banner.pass {
+      background: var(--success-bg);
+      border: 1px solid #86efac;
+      color: #14532d;
+    }
+
+    .result-banner.fail {
+      background: var(--danger-bg);
+      border: 1px solid #fca5a5;
+      color: #7f1d1d;
+    }
+
+    .result-score {
+      font-size: 2.3rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .filter-btn {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    .review-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+
+    .review-item.correct { border-left: 5px solid var(--success); }
+    .review-item.incorrect { border-left: 5px solid var(--danger); }
+
+    .status-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .status-tag.ok { background: var(--success-bg); color: var(--success); }
+    .status-tag.bad { background: var(--danger-bg); color: var(--danger); }
+
+    .exp-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    .exp-box strong { color: var(--navy); }
+    .ref-tag {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 16px;
+    }
+
+    .modal-card {
+      background: #fff;
+      border-radius: 14px;
+      max-width: 440px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    @media print {
+      header.topbar, .no-print { display: none !important; }
+      body { background: #fff; }
+      .card { border: none; box-shadow: none; padding: 0; }
+      .review-item { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-badge">ACPC®</div>
+      <div>
+        <h1>Simulador Oficial — Agile Coach Professional Certificate</h1>
+        <small>CertiProf® Versión V072026 • Banco de 40 Preguntas Auditado</small>
+      </div>
+    </div>
+    <div id="timerBox" class="timer-box">
+      <span id="participantHeader" style="font-size:0.88rem; color:#cbd5e1;"></span>
+      <div id="timerDisplay" class="timer-pill">60:00</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- SCREEN 1: WELCOME -->
+    <section id="welcomeScreen" class="card">
+      <h2 style="margin-top:0; color:var(--navy);">Condiciones Oficiales del Examen ACPC®</h2>
+      <p style="color:var(--muted); margin-top:4px;">
+        Esta prueba replica fielmente las condiciones del examen de certificación <strong>Agile Coach Professional Certification (ACPC® V072026)</strong> de CertiProf®.
+      </p>
+
+      <div class="welcome-grid">
+        <div class="stat-tile"><span>Total Preguntas</span><strong>40 preguntas</strong></div>
+        <div class="stat-tile"><span>Duración Máxima</span><strong>60 minutos</strong></div>
+        <div class="stat-tile"><span>Puntaje Aprobación</span><strong>80% (32 / 40)</strong></div>
+        <div class="stat-tile"><span>Formato</span><strong>Opción múltiple</strong></div>
+      </div>
+
+      <div class="notice-box">
+        <strong>Reglas del simulador:</strong> Al iniciar, el cronómetro de <strong>60 minutos</strong> comenzará de inmediato. Si el tiempo llega a <strong>00:00</strong>, el examen se cerrará y calificará automáticamente. Al finalizar podrás descargar tu reporte en <strong>PDF</strong> con tus resultados, las respuestas verdaderas validadas con el material oficial de CertiProf® y su explicación detallada.
+      </div>
+
+      <div class="form-group">
+        <label for="participantName">Nombre completo del participante *</label>
+        <input type="text" id="participantName" placeholder="Ej. Daniel Fernando Medina Montealegre" autocomplete="name" />
+        <small id="nameError" style="color:var(--danger); display:none; margin-top:6px;">Por favor ingresa tu nombre para iniciar la prueba.</small>
+      </div>
+
+      <button id="startBtn" class="btn btn-primary">Iniciar Examen (60:00)</button>
+    </section>
+
+    <!-- SCREEN 2: EXAM -->
+    <section id="examScreen" class="hidden">
+      <div class="exam-layout">
+        <div class="card">
+          <div class="progress-wrap">
+            <div class="progress-meta">
+              <span id="progressText">Respondidas: 0 de 40</span>
+              <span id="progressPct">0%</span>
+            </div>
+            <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+          </div>
+
+          <div class="q-header">
+            <span id="qBadge" class="q-badge">Pregunta 1 de 40</span>
+            <button id="flagBtn" type="button" class="btn btn-warn">⚑ Marcar para revisar</button>
+          </div>
+
+          <p id="qText" class="q-text"></p>
+          <div id="optionsContainer" class="options-list"></div>
+
+          <div class="nav-actions">
+            <button id="prevBtn" type="button" class="btn btn-outline">← Anterior</button>
+            <div style="display:flex; gap:10px;">
+              <button id="nextBtn" type="button" class="btn btn-primary">Siguiente →</button>
+              <button id="finishBtnMain" type="button" class="btn btn-cyan hidden">Finalizar y Calificar</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="card sidebar">
+          <h3>Mapa de Preguntas</h3>
+          <div id="qGrid" class="q-grid"></div>
+          <div class="legend">
+            <span><i class="swatch" style="background:var(--navy);"></i> Respondida</span>
+            <span><i class="swatch" style="background:#fff; border:1px solid #cbd5e1;"></i> Sin responder</span>
+            <span><i class="swatch" style="background:#f59e0b; border-radius:50%;"></i> Marcada</span>
+            <span><i class="swatch" style="border:2px solid var(--navy);"></i> Actual</span>
+          </div>
+          <button id="finishBtnSide" type="button" class="btn btn-danger" style="width:100%;">Terminar Examen</button>
+        </aside>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: RESULTS -->
+    <section id="resultsScreen" class="card hidden">
+      <div id="resultBanner" class="result-banner">
+        <div>
+          <div id="resultStatus" style="font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;"></div>
+          <h2 id="resultName" style="margin:4px 0 6px;"></h2>
+          <div id="resultMeta" style="font-size:0.9rem;"></div>
+        </div>
+        <div style="text-align:right;">
+          <div id="resultScore" class="result-score">0 / 40</div>
+          <div id="resultPercent" style="font-weight:700; font-size:1.1rem;">0%</div>
+        </div>
+      </div>
+
+      <div class="no-print" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+        <button id="downloadPdfBtn" type="button" class="btn btn-cyan">⬇ Descargar Reporte en PDF</button>
+        <button id="printFallbackBtn" type="button" class="btn btn-outline">🖨 Imprimir / Guardar PDF</button>
+        <button id="restartBtn" type="button" class="btn btn-primary">↻ Presentar de nuevo</button>
+      </div>
+
+      <div class="filter-bar no-print">
+        <button class="filter-btn active" data-filter="all">Todas (40)</button>
+        <button class="filter-btn" data-filter="correct">Correctas</button>
+        <button class="filter-btn" data-filter="incorrect">Incorrectas</button>
+        <button class="filter-btn" data-filter="unanswered">Sin responder</button>
+      </div>
+
+      <div id="reviewContainer"></div>
+    </section>
+  </main>
+
+  <!-- CONFIRM MODAL -->
+  <div id="confirmModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h3 style="margin-top:0; color:var(--navy);">¿Finalizar y entregar el examen?</h3>
+      <p id="modalSummary" style="color:var(--muted); margin-bottom:0;"></p>
+      <div class="modal-actions">
+        <button id="cancelFinishBtn" type="button" class="btn btn-outline">Volver al examen</button>
+        <button id="confirmFinishBtn" type="button" class="btn btn-primary">Sí, calificar ahora</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+  {
+    "id": 1,
+    "question": "¿Qué es un Agile Coach?",
+    "options": [
+      "a) Un líder de proyectos.",
+      "b) Un líder de transformación.",
+      "c) Un líder catalizador.",
+      "d) Todas las anteriores."
+    ],
+    "correct": 2,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 27",
+    "explanation": "CertiProf define al Agile Coach como un 'Profesional (líder catalizador) que ayuda a las personas y organizaciones a alcanzar mejores resultados de valor en ambientes de turbulencia'."
+  },
+  {
+    "id": 2,
+    "question": "La diferencia entre un Agile Coach y un director de proyectos es que el primero se concentra en que los objetivos del proyecto se alcancen de forma eficiente y efectiva, mientras que el segundo en el desarrollo de las personas.",
+    "options": [
+      "a) Cierto.",
+      "b) Falso.",
+      "c) Depende del contexto."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 28",
+    "explanation": "La afirmación está invertida. Según la tabla comparativa oficial, el Director de Proyectos tiene liderazgo directivo centrado en el cumplimiento del plan, mientras el Agile Coach empodera, desarrolla y guía a las personas y equipos."
+  },
+  {
+    "id": 3,
+    "question": "Ser un Agile Coach significa:",
+    "options": [
+      "a) Tener conciencia, deseo, conocimiento, capacidades y reforzar su pensamiento Agile.",
+      "b) Utilizar y aplicar las técnicas de Agile Coaching.",
+      "c) Ser un agente de cambio comprometido con el cambio.",
+      "d) Ninguna de las anteriores."
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 29-30",
+    "explanation": "'Ser Agile Coach' se refiere a los comportamientos, pensamientos, ideas y creencias que debe desarrollar internamente, a diferencia de 'Hacer Agile Coaching' (aplicar el proceso y técnicas)."
+  },
+  {
+    "id": 4,
+    "question": "El camino del Agile comienza siendo Scrum Master y concluye como Agile Coach en todos los casos:",
+    "options": [
+      "a) Cierto.",
+      "b) Falso."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 31-32",
+    "explanation": "Tanto el modelo de Lyssa Adkins como la evolución 2023 muestran múltiples rutas hacia Agile Coach (desde desarrollador/Tech Lead, Project Manager, Product Owner, Kanban, DevOps u OKR)."
+  },
+  {
+    "id": 5,
+    "question": "Las etapas del proceso de Agile Coaching son las mismas a nivel empresarial, de equipos e individual.",
+    "options": [
+      "a) Cierto.",
+      "b) Falso."
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 179-181",
+    "explanation": "En los tres niveles (Empresarial, Equipos e Individual) el marco guía mantiene las mismas tres etapas estructurales: Preparación, Ejecución del Agile Coaching y Cierre del proceso."
+  },
+  {
+    "id": 6,
+    "question": "¿Qué competencia se refiere a la capacidad de comprender y aplicar los valores, principios y prácticas ágiles y lean para generar resultados de valor, manteniendo un equilibrio entre la operación y transformación continua, en beneficio de las personas y organizaciones?",
+    "options": [
+      "a) Facilitación",
+      "b) Mentoring",
+      "c) Liderazgo Lean Agile",
+      "d) Enseñanza / Docencia"
+    ],
+    "correct": 2,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 70",
+    "explanation": "Corresponde a la definición textual de la competencia 'Liderazgo Lean-Agile' en el marco de competencias del Agile Coach."
+  },
+  {
+    "id": 7,
+    "question": "El Coaching Profesional se refiere a:",
+    "options": [
+      "a) Capacidad para actuar como Coach, con base en los intereses de un cliente, ayudándole a determinar la dirección; en lugar de aconsejar u opinar con base en la experiencia y conocimiento sobre los procesos de coaching.",
+      "b) Proceso neutral que le permite a los individuos, equipos y organizaciones alcanzar objetivos y resultados de forma más eficiente y equilibrada en sus procesos de descubrimiento, adopción y adaptación, manteniendo su propósito y definición de éxito.",
+      "c) Capacidad para compartir e impartir la experiencia y conocimiento propio para ayudar a otros a desarrollarse en un dominio igual o similar.",
+      "d) Capacidad de transferir el conocimiento adecuado, en el momento correcto, de forma alineada, para que las personas, los equipos y las organizaciones aprendan y lo adopten de forma efectiva."
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 73",
+    "explanation": "Definición literal de 'Coaching Profesional': asociarse con el cliente con base en sus intereses para ayudarle a determinar su dirección sin aconsejar ni opinar."
+  },
+  {
+    "id": 8,
+    "question": "La Facilitación se refiere a:",
+    "options": [
+      "a) Capacidad para actuar como Coach, con base en los intereses de un cliente, ayudándole a determinar la dirección; en lugar de aconsejar u opinar con base en la experiencia y conocimiento sobre los procesos de coaching.",
+      "b) Proceso neutral que le permite a los individuos, equipos y organizaciones alcanzar objetivos y resultados de forma más eficiente y equilibrada en sus procesos de descubrimiento, adopción y adaptación, manteniendo su propósito y definición de éxito.",
+      "c) Capacidad para compartir e impartir la experiencia y conocimiento propio para ayudar a otros a desarrollarse en un dominio igual o similar.",
+      "d) Capacidad de transferir el conocimiento adecuado, en el momento correcto, de forma alineada, para que las personas, los equipos y las organizaciones aprendan y lo adopten de forma efectiva."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 71",
+    "explanation": "Definición literal de 'Facilitación': proceso neutral que guía a individuos, equipos y organizaciones manteniendo su propósito y definición de éxito."
+  },
+  {
+    "id": 9,
+    "question": "La capacidad de transferir el conocimiento adecuado, en el momento correcto, de forma alineada, para que las personas, los equipos y las organizaciones aprendan y lo adopten de forma efectiva.",
+    "options": [
+      "a) Facilitación",
+      "b) Mentoring",
+      "c) Liderazgo Lean Agile",
+      "d) Enseñanza / Docencia"
+    ],
+    "correct": 3,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 72",
+    "explanation": "Definición textual de la competencia 'Habilidades de Enseñanza (Teaching)'."
+  },
+  {
+    "id": 10,
+    "question": "¿Cuál de las siguientes se refiere a la capacidad de compartir e impartir la experiencia y conocimiento propio para ayudar a otros a desarrollarse en un dominio igual o similar?",
+    "options": [
+      "a) Facilitación",
+      "b) Mentoring",
+      "c) Liderazgo Lean Agile",
+      "d) Enseñanza / Docencia"
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 74",
+    "explanation": "Definición textual de 'Mentoring': compartir e impartir experiencia y conocimiento propio para desarrollar a otros en un dominio igual o similar."
+  },
+  {
+    "id": 11,
+    "question": "¿Cuál de las siguientes se refiere a la capacidad y experiencia para aplicar marcos de estrategia y administración de negocio para emplear Agile como una ventaja comercial, a través de Lean Start-Up, técnicas de innovación, enfoques de administración de procesos empresariales basados en flujos y otras técnicas relacionadas con la innovación en el dominio empresarial?",
+    "options": [
+      "a) Agile Coaching.",
+      "b) Mentoring & Coaching.",
+      "c) Dominio de Negocio.",
+      "d) Dominio de Transformación."
+    ],
+    "correct": 2,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 77",
+    "explanation": "Corresponde a la definición exacta de 'Dominio sobre el Negocio (Business Mastery)'."
+  },
+  {
+    "id": 12,
+    "question": "Capacidad para facilitar, catalizar y liderar el cambio o transformación organizacional (según corresponda). Esta área se basa en la gestión del cambio, la cultura de la organización, el desarrollo de la organización, el pensamiento sistémico y otras ciencias del comportamiento.",
+    "options": [
+      "a) Agile Coaching.",
+      "b) Mentoring & Coaching.",
+      "c) Dominio de Negocio.",
+      "d) Dominio de Transformación."
+    ],
+    "correct": 3,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 76",
+    "explanation": "Corresponde a la definición exacta de 'Dominio en la Transformación (Transformation Mastery)'."
+  },
+  {
+    "id": 13,
+    "question": "Son una serie de principios enfocados a eliminar todas las tareas que no aporten valor sobre aquello que estamos realizando.",
+    "options": [
+      "a) Lean.",
+      "b) Agile.",
+      "c) Scrum.",
+      "d) Todas las anteriores."
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 63",
+    "explanation": "Definición literal de 'Lean' en el material de CertiProf, derivado del Lean Manufacturing de Toyota para eliminar desperdicios en la cadena de valor."
+  },
+  {
+    "id": 14,
+    "question": "Algunos de los principios Agile que se pueden dar como beneficio de implementarlos son, excepto:",
+    "options": [
+      "a) Enfoque en los productos.",
+      "b) Gestión por fases.",
+      "c) Gestión por excepción.",
+      "d) Ninguna de las anteriores."
+    ],
+    "correct": 3,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 46-47 y Clave Oficial",
+    "explanation": "Ninguna de las opciones a, b o c corresponde a los 12 principios del Manifiesto Ágil (son principios de enfoques tradicionales/PRINCE2), por lo cual la clave oficial es 'Ninguna de las anteriores'."
+  },
+  {
+    "id": 15,
+    "question": "Con base al Manifiesto Ágil, entendemos que en los principios y prácticas ágiles sólo se pueden aplicar en entornos tecnológicos o relacionados a estos.",
+    "options": [
+      "a) Cierto.",
+      "b) Falso.",
+      "c) Depende del contexto."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 44",
+    "explanation": "Falso. El Tip Clave oficial aclara que si no estás en desarrollo de software, basta cambiar 'software' por 'resultados' o 'entregables de valor' (aplicable en RRHH, Ventas, Marketing, Compras, etc.)."
+  },
+  {
+    "id": 16,
+    "question": "Si llevando un proceso de Agile Coaching, mientras estas dando una formación, alguien te dice que no estás haciendo coaching porque en este no se da formación esta persona está en:",
+    "options": [
+      "a) Lo Cierto",
+      "b) Lo incorrecto"
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 139-140",
+    "explanation": "Está en lo cierto respecto al coaching puro: el material especifica que la formación 'no es coaching, pero puede aplicarse como estrategia en el mundo ágil'."
+  },
+  {
+    "id": 17,
+    "question": "La formación profesional:",
+    "options": [
+      "a) Es un procedimiento basado en el conocimiento, el cual consiste en analizar a través de la observación situaciones particulares a fin de originar una conclusión.",
+      "b) Es el proceso y el efecto de formar o formarse, hace referencia al proceso educativo o de enseñanza-aprendizaje. Se identifica también con un conjunto de conocimientos.",
+      "c) Es el aprendizaje que se desarrolla en el lugar de trabajo para mejorar el rendimiento de los empleados.",
+      "d) Busca que una persona adquiera capacidades o habilidades para el desarrollo de determinadas acciones."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 109",
+    "explanation": "Definición literal de 'Formación' en la lámina 'Diferencias Clave' (a es inducción, c es entrenamiento profesional, d es capacitación)."
+  },
+  {
+    "id": 18,
+    "question": "Hacer Agile Coaching se refiere al proceso mediante el cual se ayuda a los equipos e individuos a adoptar, adaptar y aplicar las prácticas ágiles con el propósito de mejorar los resultados.",
+    "options": [
+      "a) Cierto",
+      "b) Falso"
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 30 y 33",
+    "explanation": "Cierto. 'Hacer Agile Coaching' es el proceso mediante el cual se ayuda a personas, equipos y organizaciones en la adopción y adaptación de la agilidad para mejorar y acelerar resultados."
+  },
+  {
+    "id": 19,
+    "question": "Estrictamente en el rol un Agile Coach puede ser consultor y asesor estratégico, si cuenta con la experiencia y la autoridad correspondiente.",
+    "options": [
+      "a) Cierto",
+      "b) Falso"
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 28 y 139",
+    "explanation": "Falso. La consultoría y el rol de consejero no corresponden estrictamente al coaching; el Agile Coach empodera, guía y habilita en lugar de actuar con autoridad directiva."
+  },
+  {
+    "id": 20,
+    "question": "Una de las principales consideraciones que debes tener al dar una formación de agilidad es:",
+    "options": [
+      "a) Conocimiento sobre el equipo.",
+      "b) Medios de evaluación.",
+      "c) Experiencia en el tema a impartir.",
+      "d) Todas las anteriores."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 112",
+    "explanation": "En la diapositiva oficial titulada 'Consideraciones Importantes' figuran textualmente: Propósito del curso, Objetivo, Medios de evaluación, Actividades, Agenda y Creación de ideas y cierre."
+  },
+  {
+    "id": 21,
+    "question": "Las técnicas de coaching:",
+    "options": [
+      "a) Son recursos palpables, como pruebas, preguntas, gráficos, formularios, hojas de planificación y algunos tipos de dinámicas.",
+      "b) Tienen como objetivo aumentar el rendimiento de una persona, a través del autoconocimiento y el autodesarrollo.",
+      "c) Tienen como objetivo recopilar información importante que contribuya al proceso de coaching.",
+      "d) Tienen como objetivo principal establecer una relación entre Coach y Coachee, una relación de confianza, comprensión, complicidad y compromiso entre las partes."
+    ],
+    "correct": 3,
+    "ref": "Material del Trainer ACPC V072026, 'Método / Técnica / Herramientas'",
+    "explanation": "Definición literal de 'Técnicas de coaching' en el material oficial (por ejemplo, rapport, flujo, replanteamiento), diferenciándose de las herramientas palpables."
+  },
+  {
+    "id": 22,
+    "question": "¿Cuál de los siguientes no es un pilar del coaching?",
+    "options": [
+      "a) Ser humano.",
+      "b) Procesos y herramientas.",
+      "c) Método.",
+      "d) Competencias."
+    ],
+    "correct": 1,
+    "ref": "Material del Trainer ACPC V072026, 'Pilares del Coaching'",
+    "explanation": "'Procesos y herramientas' no es un pilar del coaching (es un distractor tomado del Manifiesto Ágil). Los pilares detallados en el material son Ser Humano, Metodología y Técnicas/Herramientas."
+  },
+  {
+    "id": 23,
+    "question": "Si requieres guiar un cambio de creencias y valores ¿qué tipo de coaching es más adecuado?",
+    "options": [
+      "a) Coaching Evolutivo.",
+      "b) Coaching Generativo.",
+      "c) Coaching de Remedicación.",
+      "d) Ninguno de los anteriores."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio pág. 138 y Material del Trainer (7 Niveles de Coaching)",
+    "explanation": "CORRECCIÓN VALIDADA: Según el cuadro oficial '7 Niveles de Coaching' (pág. 138 y Trainer), los niveles 3 (Creencias), 4 (Valores y habilidades) y 5 (Conocimientos) pertenecen al Coaching Generativo (opción b). El Coaching de Remedicación solo cubre comportamiento y medio ambiente (niveles 1 y 2). Nota: La tabla de respuestas del PDF de Preguntas de Apoyo contiene una errata marcando 'C'."
+  },
+  {
+    "id": 24,
+    "question": "En este momento ya estamos conscientes de que somos incompetentes. Toda la motivación y entusiasmo son tan sólo un recuerdo.",
+    "options": [
+      "a) Inconscientemente Incompetente.",
+      "b) Conscientemente Incompetente.",
+      "c) Conscientemente Competente.",
+      "d) Inconscientemente Competente."
+    ],
+    "correct": 1,
+    "ref": "Material del Trainer ACPC V072026, 'Etapa #2: Conscientemente Incompetente'",
+    "explanation": "Texto literal de la Etapa #2 (Conscientemente Incompetente) dentro de 'Las 4 Etapas para Alcanzar Sabiduría'."
+  },
+  {
+    "id": 25,
+    "question": "Esta etapa comienza cuando te ofrecen un ascenso, decides comenzar un nuevo negocio, comienzas una nueva relación, un nuevo deporte, hobbies o te acaban de asignar una función en donde tendrás que ser Agile Coach o trabajar dentro de una nueva forma de trabajo.",
+    "options": [
+      "a) Inconscientemente Incompetente.",
+      "b) Conscientemente Incompetente.",
+      "c) Conscientemente Competente.",
+      "d) Inconscientemente Competente."
+    ],
+    "correct": 0,
+    "ref": "Material del Trainer ACPC V072026, 'Etapa #1: Inconscientemente Incompetente'",
+    "explanation": "Texto literal de la Etapa #1 (Inconscientemente Incompetente), donde somos incompetentes pero aún no lo sabemos y sentimos alta motivación."
+  },
+  {
+    "id": 26,
+    "question": "En Agile coaching no se puede utilizar el coaching profesional y el mentoring de forma conjunta ya que esto va contra los principios fundamentales del coaching.",
+    "options": [
+      "a) Cierto.",
+      "b) Falso."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 171",
+    "explanation": "Falso. El material oficial indica expresamente que para desarrollar habilidades en Agile Coaching 'podemos crear una combinación de dos enfoques: Coaching y Mentoring'."
+  },
+  {
+    "id": 27,
+    "question": "El Coaching no implica:",
+    "options": [
+      "a) Gestión.",
+      "b) Escucha Activa.",
+      "c) Feedback.",
+      "d) Rapport."
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 150",
+    "explanation": "En la lámina 'Coaching Implica' figuran Motivación, Potencial, Desarrollo, Habilidades, Apoyo, Escucha Activa, Feedback, Rapport y Preguntas Poderosas. No implica Gestión."
+  },
+  {
+    "id": 28,
+    "question": "Son recursos palpables, como pruebas, preguntas, gráficos, formularios, hojas de planificación y algunos tipos de dinámicas.",
+    "options": [
+      "a) Técnicas de coaching",
+      "b) Herramientas de coaching",
+      "c) Métodos de coaching",
+      "d) Procesos de coaching"
+    ],
+    "correct": 1,
+    "ref": "Material del Trainer ACPC V072026, 'Método / Técnica / Herramientas'",
+    "explanation": "Definición literal de 'Herramientas de coaching', diseñadas para recopilar información, generar reflexiones y medir la evolución del Coachee."
+  },
+  {
+    "id": 29,
+    "question": "Nos permite mejorar la calidad de los procesos grupales, ahorro de tiempo en términos de eficiencia, así como la prevención y transformación de conflictos entre otros.",
+    "options": [
+      "a) Agile Coaching.",
+      "b) Mentoring.",
+      "c) Facilitación.",
+      "d) Cualquiera de las anteriores."
+    ],
+    "correct": 2,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 93",
+    "explanation": "Corresponde textualmente a los beneficios listados en la diapositiva de 'Facilitación'."
+  },
+  {
+    "id": 30,
+    "question": "¿Cuál de los siguientes no es un paso de la facilitación?",
+    "options": [
+      "a) Definir el objetivo",
+      "b) Investigar previamente",
+      "c) Establecer reglas y pautas",
+      "d) Ajustar los resultados de la sesión"
+    ],
+    "correct": 3,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 95",
+    "explanation": "Los 7 pasos oficiales son: Definir objetivo, Identificar participantes, Investigar previamente, Diseñar dinámicas/estrategias, Establecer reglas y pautas, Ejecutar y ajustar, y Cerrar. Nunca se ajustan los resultados por principio de neutralidad."
+  },
+  {
+    "id": 31,
+    "question": "Shu-Ha-Ri es un proceso mediante el cual podemos adoptar y madurar una práctica ágil hasta la transformación de ésta, de acuerdo a las necesidades y capacidades de nuestra propia organización.",
+    "options": [
+      "a) Cierto.",
+      "b) Falso."
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 104",
+    "explanation": "Cierto. Shu-Ha-Ri describe la evolución de equipos ágiles en tres etapas: Shu (seguir las reglas), Ha (romper/adaptar las reglas) y Ri (ser la regla)."
+  },
+  {
+    "id": 32,
+    "question": "Se refiere al aprendizaje que se desarrolla en el lugar de trabajo para mejorar el rendimiento de los empleados.",
+    "options": [
+      "a) Inducción.",
+      "b) Capacitación.",
+      "c) Entrenamiento.",
+      "d) Formación."
+    ],
+    "correct": 2,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 109",
+    "explanation": "Definición textual de 'Entrenamiento profesional' en la sección 'Diferencias Clave'."
+  },
+  {
+    "id": 33,
+    "question": "Si una persona le solicita que le refuerce el conocimiento en el espacio de trabajo para recordarle cómo aplicar un determinado conocimiento, ¿qué tipo de entrenamiento estás dando?",
+    "options": [
+      "a) Inducción.",
+      "b) Mentoring.",
+      "c) Entrenamiento de refuerzo.",
+      "d) En momentos clave."
+    ],
+    "correct": 3,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 108 y 114",
+    "explanation": "Corresponde a enseñar 'En momentos clave' (momentos de aprendizaje que ocurren mientras el equipo trabaja y conversa, transmitiendo justo lo necesario)."
+  },
+  {
+    "id": 34,
+    "question": "Indiscutiblemente el coaching es la mejor forma de gestión para equipos que tienen poco conocimiento técnico y habilidades de autogestión.",
+    "options": [
+      "a) Cierto.",
+      "b) Falso."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 144",
+    "explanation": "Falso. Según la matriz de Competencias vs. Etapas de Sabiduría, en etapas iniciales sin dominio previo son más adecuadas la enseñanza y la facilitación, no el coaching puro."
+  },
+  {
+    "id": 35,
+    "question": "Es un enfoque para fomentar el cambio de una organización para mejorar la productividad, los comportamientos y los resultados en el contexto del desarrollo de soluciones o productos se refiere a:",
+    "options": [
+      "a) Agile Coaching Proactivo.",
+      "b) ADN del Agile Coach.",
+      "c) DNA del Líder Lean Agile.",
+      "d) ADN del Entrenador Agile."
+    ],
+    "correct": 1,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 167",
+    "explanation": "Texto introductorio oficial de la sección 'ADN del Agile Coach' (Manoel Pimentel), compuesto por 5 elementos habilitadores."
+  },
+  {
+    "id": 36,
+    "question": "Requiere de 2-12 Semanas por etapa, utilizado para hasta 16 personas y puede ser dirigido directo o con agentes de cambio.",
+    "options": [
+      "a) Agile Coaching.",
+      "b) Agile Coaching individual.",
+      "c) Agile Coaching de equipos.",
+      "d) Agile Coaching empresarial."
+    ],
+    "correct": 2,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 180",
+    "explanation": "Corresponde textualmente a los parámetros de 'Agile Coaching Equipos' (2-12 semanas por etapa, hasta 16 personas, directo o mediante agentes de cambio)."
+  },
+  {
+    "id": 37,
+    "question": "Requiere de 8-16 Semanas por etapa, utilizado para más de 100 personas y debe ser dirigido por medio de agentes de cambio.",
+    "options": [
+      "a) Programa de transformación ágil.",
+      "b) Agile Coaching individual.",
+      "c) Agile Coaching de equipos.",
+      "d) Agile Coaching empresarial."
+    ],
+    "correct": 3,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 179",
+    "explanation": "Corresponde a 'Agile Coaching Empresarial' (en la diapositiva oficial figura como 2-4 meses por etapa —equivalente a 8-16 semanas—, más de 125 personas y a través de agentes de cambio)."
+  },
+  {
+    "id": 38,
+    "question": "¿Cuál de las siguientes métricas no aplica en un proceso de Agile Coaching?",
+    "options": [
+      "a) Nivel de aplicación de la práctica.",
+      "b) Velocidad de entrega.",
+      "c) Nivel de cumplimiento del proyecto.",
+      "d) Todas las anteriores."
+    ],
+    "correct": 2,
+    "ref": "Material de Autoestudio ACPC V072026, págs. 28 y 188",
+    "explanation": "El cumplimiento del plan/proyecto es una métrica del Director de Proyectos predictivo (Waterfall). En Agile Coaching se miden adopción/desarrollo de personas y resultados organizacionales (rentabilidad, velocidad, calidad)."
+  },
+  {
+    "id": 39,
+    "question": "Un Agile Coach debe tener la visión de poder medir tanto los resultados de la organización como el desarrollo de las personas y nivel de adopción.",
+    "options": [
+      "a) Cierto.",
+      "b) Falso."
+    ],
+    "correct": 0,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 187",
+    "explanation": "Cierto. La lámina '¿Qué se mide en Agile Coaching?' establece exactamente esas dos dimensiones: Desarrollo de las personas y Nivel de adopción, y Resultados organizacionales."
+  },
+  {
+    "id": 40,
+    "question": "Una de las prácticas, técnicas y herramientas habilitadoras del Agile Coaching puede ser:",
+    "options": [
+      "a) Kanban.",
+      "b) Scrum.",
+      "c) Preguntas de Poder.",
+      "d) La Casa de la Conciencia."
+    ],
+    "correct": 3,
+    "ref": "Material de Autoestudio ACPC V072026, pág. 203",
+    "explanation": "En la sección 'Prácticas, técnicas y herramientas habilitadoras' se incluye específicamente 'La Casa de la Conciencia' para identificar brechas entre resultados deseados y obtenidos."
+  }
+];
+    const TOTAL_SECONDS = 60 * 60; // 60 minutos exactos
+    const PASS_SCORE = 32; // 80% de 40 preguntas
+
+    let participant = "";
+    let currentIdx = 0;
+    let answers = new Array(QUESTIONS.length).fill(null);
+    let flagged = new Set();
+    let remainingSeconds = TOTAL_SECONDS;
+    let timerInterval = null;
+    let examFinished = false;
+    let finishReason = "Entregado por el participante";
+    let finishTimestamp = "";
+
+    // DOM elements
+    const welcomeScreen = document.getElementById("welcomeScreen");
+    const examScreen = document.getElementById("examScreen");
+    const resultsScreen = document.getElementById("resultsScreen");
+    const timerBox = document.getElementById("timerBox");
+    const timerDisplay = document.getElementById("timerDisplay");
+    const participantHeader = document.getElementById("participantHeader");
+    const participantInput = document.getElementById("participantName");
+    const nameError = document.getElementById("nameError");
+
+    const qBadge = document.getElementById("qBadge");
+    const qText = document.getElementById("qText");
+    const optionsContainer = document.getElementById("optionsContainer");
+    const qGrid = document.getElementById("qGrid");
+    const flagBtn = document.getElementById("flagBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const finishBtnMain = document.getElementById("finishBtnMain");
+    const finishBtnSide = document.getElementById("finishBtnSide");
+    const progressText = document.getElementById("progressText");
+    const progressPct = document.getElementById("progressPct");
+    const progressFill = document.getElementById("progressFill");
+
+    const confirmModal = document.getElementById("confirmModal");
+    const modalSummary = document.getElementById("modalSummary");
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    function startTimer() {
+      updateTimerUI();
+      timerInterval = setInterval(() => {
+        remainingSeconds--;
+        updateTimerUI();
+        if (remainingSeconds <= 0) {
+          clearInterval(timerInterval);
+          finishReason = "Cierre automático — Tiempo límite agotado (60:00)";
+          finalizeExam();
+        }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      timerDisplay.textContent = formatTime(Math.max(0, remainingSeconds));
+      timerDisplay.classList.remove("warning", "danger");
+      if (remainingSeconds <= 300) {
+        timerDisplay.classList.add("danger");
+      } else if (remainingSeconds <= 600) {
+        timerDisplay.classList.add("warning");
+      }
+    }
+
+    function renderGrid() {
+      qGrid.innerHTML = "";
+      QUESTIONS.forEach((q, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "q-dot";
+        btn.textContent = q.id;
+        if (idx === currentIdx) btn.classList.add("current");
+        if (answers[idx] !== null) btn.classList.add("answered");
+        if (flagged.has(idx)) btn.classList.add("flagged");
+        btn.addEventListener("click", () => {
+          currentIdx = idx;
+          renderQuestion();
+        });
+        qGrid.appendChild(btn);
+      });
+    }
+
+    function updateProgress() {
+      const count = answers.filter(a => a !== null).length;
+      const pct = Math.round((count / QUESTIONS.length) * 100);
+      progressText.textContent = `Respondidas: ${count} de ${QUESTIONS.length}`;
+      progressPct.textContent = `${pct}%`;
+      progressFill.style.width = `${pct}%`;
+    }
+
+    function renderQuestion() {
+      const q = QUESTIONS[currentIdx];
+      qBadge.textContent = `Pregunta ${q.id} de ${QUESTIONS.length}`;
+      qText.textContent = `${q.id}. ${q.question}`;
+
+      flagBtn.classList.toggle("active", flagged.has(currentIdx));
+      flagBtn.textContent = flagged.has(currentIdx) ? "⚑ Marcada para revisar" : "⚑ Marcar para revisar";
+
+      optionsContainer.innerHTML = "";
+      q.options.forEach((optText, optIdx) => {
+        const label = document.createElement("label");
+        label.className = "option-item" + (answers[currentIdx] === optIdx ? " selected" : "");
+
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = `q_${q.id}`;
+        radio.value = optIdx;
+        radio.checked = answers[currentIdx] === optIdx;
+        radio.addEventListener("change", () => {
+          answers[currentIdx] = optIdx;
+          renderQuestion();
+        });
+
+        const span = document.createElement("span");
+        span.textContent = optText;
+
+        label.appendChild(radio);
+        label.appendChild(span);
+        optionsContainer.appendChild(label);
+      });
+
+      prevBtn.disabled = currentIdx === 0;
+      const isLast = currentIdx === QUESTIONS.length - 1;
+      nextBtn.classList.toggle("hidden", isLast);
+      finishBtnMain.classList.toggle("hidden", !isLast);
+
+      updateProgress();
+      renderGrid();
+    }
+
+    function openConfirmModal() {
+      const answeredCount = answers.filter(a => a !== null).length;
+      const unanswered = QUESTIONS.length - answeredCount;
+      modalSummary.textContent = unanswered > 0
+        ? `Has respondido ${answeredCount} de ${QUESTIONS.length} preguntas. Tienes ${unanswered} pregunta(s) sin responder. ¿Deseas cerrar y calificar el examen?`
+        : `Has respondido las ${QUESTIONS.length} preguntas. ¿Deseas finalizar y ver tus resultados?`;
+      confirmModal.classList.remove("hidden");
+    }
+
+    function computeResults() {
+      let correctCount = 0;
+      let unansweredCount = 0;
+      QUESTIONS.forEach((q, idx) => {
+        if (answers[idx] === null) unansweredCount++;
+        else if (answers[idx] === q.correct) correctCount++;
+      });
+      const pct = Math.round((correctCount / QUESTIONS.length) * 100);
+      const passed = correctCount >= PASS_SCORE;
+      const usedSeconds = TOTAL_SECONDS - Math.max(0, remainingSeconds);
+      return { correctCount, unansweredCount, incorrectCount: QUESTIONS.length - correctCount, pct, passed, usedSeconds };
+    }
+
+    function finalizeExam() {
+      if (examFinished) return;
+      examFinished = true;
+      clearInterval(timerInterval);
+      confirmModal.classList.add("hidden");
+      finishTimestamp = new Date().toLocaleString("es-CO");
+
+      const res = computeResults();
+      examScreen.classList.add("hidden");
+      timerBox.style.display = "none";
+      resultsScreen.classList.remove("hidden");
+
+      const banner = document.getElementById("resultBanner");
+      banner.className = "result-banner " + (res.passed ? "pass" : "fail");
+      document.getElementById("resultStatus").textContent = res.passed
+        ? "✓ APROBADO — CUMPLE EL 80% REQUERIDO POR CERTIPROF®"
+        : "✕ NO APROBADO — REQUIERE MÍNIMO 80% (32/40)";
+      document.getElementById("resultName").textContent = participant;
+      document.getElementById("resultMeta").textContent =
+        `${finishReason} • Tiempo utilizado: ${formatTime(res.usedSeconds)} • Fecha: ${finishTimestamp}`;
+      document.getElementById("resultScore").textContent = `${res.correctCount} / ${QUESTIONS.length}`;
+      document.getElementById("resultPercent").textContent = `${res.pct}%`;
+
+      renderReview("all");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderReview(filter) {
+      const container = document.getElementById("reviewContainer");
+      container.innerHTML = "";
+      let shown = 0;
+
+      QUESTIONS.forEach((q, idx) => {
+        const userAns = answers[idx];
+        const isCorrect = userAns === q.correct;
+        const isUnanswered = userAns === null;
+
+        if (filter === "correct" && !isCorrect) return;
+        if (filter === "incorrect" && (isCorrect || isUnanswered)) return;
+        if (filter === "unanswered" && !isUnanswered) return;
+
+        shown++;
+        const div = document.createElement("div");
+        div.className = "review-item " + (isCorrect ? "correct" : "incorrect");
+
+        const userText = isUnanswered ? "Sin responder" : q.options[userAns];
+        const correctText = q.options[q.correct];
+
+        div.innerHTML = `
+          <span class="status-tag ${isCorrect ? "ok" : "bad"}">
+            ${isCorrect ? "✓ Correcta" : (isUnanswered ? "○ Sin responder" : "✕ Incorrecta")}
+          </span>
+          <div style="font-weight:700; color:var(--navy); margin-bottom:8px;">${q.id}. ${q.question}</div>
+          <div style="font-size:0.92rem; margin-bottom:4px;"><strong>Tu respuesta:</strong> ${userText}</div>
+          <div style="font-size:0.92rem; color:var(--success);"><strong>Respuesta verdadera:</strong> ${correctText}</div>
+          <div class="exp-box">
+            <strong>Explicación validada (CertiProf®):</strong> ${q.explanation}
+            <span class="ref-tag">Fuente oficial: ${q.ref}</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      if (shown === 0) {
+        container.innerHTML = `<p style="color:var(--muted); text-align:center; padding:24px;">No hay preguntas en esta categoría.</p>`;
+      }
+    }
+
+    function downloadPDF() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("No se pudo cargar la librería jsPDF (posible modo sin conexión). Se abrirá la ventana de impresión para guardar como PDF.");
+        window.print();
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      const res = computeResults();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      const maxWidth = pageWidth - margin * 2;
+      let y = 18;
+
+      function ensureSpace(needed) {
+        if (y + needed > pageHeight - 16) {
+          doc.addPage();
+          y = 18;
+        }
+      }
+
+      // Header Banner
+      doc.setFillColor(11, 31, 58);
+      doc.rect(0, 0, pageWidth, 34, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(15);
+      doc.text("REPORTE DE RESULTADOS — SIMULADOR ACPC® V072026", margin, 14);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.text("Agile Coach Professional Certification (CertiProf®) • Banco Auditado de 40 Preguntas", margin, 22);
+      doc.text(`Fecha: ${finishTimestamp}`, margin, 28);
+
+      y = 44;
+      doc.setTextColor(30, 41, 59);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(`Participante: ${participant}`, margin, y);
+      y += 6;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Resultado: ${res.correctCount} / ${QUESTIONS.length} (${res.pct}%) — ${res.passed ? "APROBADO" : "NO APROBADO"} (Mínimo 80%)`, margin, y);
+      y += 5.5;
+      doc.text(`Tiempo utilizado: ${formatTime(res.usedSeconds)} / 60:00  |  ${finishReason}`, margin, y);
+      y += 8;
+
+      doc.setDrawColor(203, 213, 225);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 7;
+
+      QUESTIONS.forEach((q, idx) => {
+        const userAns = answers[idx];
+        const isCorrect = userAns === q.correct;
+        const userText = userAns === null ? "Sin responder" : q.options[userAns];
+        const correctText = q.options[q.correct];
+
+        const qLines = doc.splitTextToSize(`${q.id}. ${q.question}`, maxWidth);
+        const uLines = doc.splitTextToSize(`Tu respuesta: ${userText}`, maxWidth);
+        const cLines = doc.splitTextToSize(`Respuesta verdadera: ${correctText}`, maxWidth);
+        const eLines = doc.splitTextToSize(`Explicación (${q.ref}): ${q.explanation}`, maxWidth);
+
+        const blockHeight = (qLines.length + uLines.length + cLines.length + eLines.length) * 4.5 + 10;
+        ensureSpace(blockHeight);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(isCorrect ? 21 : 185, isCorrect ? 128 : 28, isCorrect ? 61 : 28);
+        doc.text(isCorrect ? "[CORRECTA]" : (userAns === null ? "[SIN RESPONDER]" : "[INCORRECTA]"), margin, y);
+        y += 4.5;
+
+        doc.setTextColor(11, 31, 58);
+        doc.text(qLines, margin, y);
+        y += qLines.length * 4.4 + 1;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85);
+        doc.text(uLines, margin, y);
+        y += uLines.length * 4.2 + 0.8;
+
+        doc.setTextColor(21, 128, 61);
+        doc.text(cLines, margin, y);
+        y += cLines.length * 4.2 + 0.8;
+
+        doc.setTextColor(71, 85, 105);
+        doc.text(eLines, margin, y);
+        y += eLines.length * 4.2 + 4;
+
+        doc.setDrawColor(226, 232, 240);
+        doc.line(margin, y - 1.5, pageWidth - margin, y - 1.5);
+        y += 2.5;
+      });
+
+      const safeName = participant.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]/g, "").trim().replace(/\s+/g, "_") || "Participante";
+      doc.save(`Resultado_ACPC_${safeName}.pdf`);
+    }
+
+    // Event listeners
+    document.getElementById("startBtn").addEventListener("click", () => {
+      const val = participantInput.value.trim();
+      if (!val) {
+        nameError.style.display = "block";
+        participantInput.focus();
+        return;
+      }
+      nameError.style.display = "none";
+      participant = val;
+      participantHeader.textContent = participant;
+      welcomeScreen.classList.add("hidden");
+      examScreen.classList.remove("hidden");
+      timerBox.style.display = "flex";
+      renderQuestion();
+      startTimer();
+    });
+
+    flagBtn.addEventListener("click", () => {
+      if (flagged.has(currentIdx)) flagged.delete(currentIdx);
+      else flagged.add(currentIdx);
+      renderQuestion();
+    });
+
+    prevBtn.addEventListener("click", () => {
+      if (currentIdx > 0) {
+        currentIdx--;
+        renderQuestion();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentIdx < QUESTIONS.length - 1) {
+        currentIdx++;
+        renderQuestion();
+      }
+    });
+
+    finishBtnMain.addEventListener("click", openConfirmModal);
+    finishBtnSide.addEventListener("click", openConfirmModal);
+    document.getElementById("cancelFinishBtn").addEventListener("click", () => confirmModal.classList.add("hidden"));
+    document.getElementById("confirmFinishBtn").addEventListener("click", () => {
+      finishReason = "Entregado manualmente por el participante";
+      finalizeExam();
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderReview(btn.dataset.filter);
+      });
+    });
+
+    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
+    document.getElementById("printFallbackBtn").addEventListener("click", () => window.print());
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      currentIdx = 0;
+      answers = new Array(QUESTIONS.length).fill(null);
+      flagged = new Set();
+      remainingSeconds = TOTAL_SECONDS;
+      examFinished = false;
+      resultsScreen.classList.add("hidden");
+      welcomeScreen.classList.remove("hidden");
+    });
+  </script>
+</body>
+</html>
